@@ -9,7 +9,7 @@ env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/${{ github.repository }}-backend
   FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend
-  # Public API origin the dashboard's browser bundle calls (baked at build).
+  # Public API origin the dashboard's browser bundle calls (baked at build)
   PUBLIC_API_URL: https://api.jarvis.example.com
 
 jobs:
