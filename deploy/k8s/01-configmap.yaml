@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-config
+  namespace: jarvis
+data:
+  APP_NAME: "Jarvis"
+  APP_ENV: "production"
+  DEBUG: "false"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+  CORS_ORIGINS: "https://app.jarvis.example.com"
+
+  # In-cluster service names (see the Service objects in each manifest).
+  POSTGRES_HOST: "jarvis-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: "jarvis"
+  POSTGRES_DB: "jarvis"
+  REDIS_HOST: "jarvis-redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  CHROMA_HOST: "jarvis-chroma"
+  CHROMA_PORT_INTERNAL: "8000"
+
+  # LLM + embeddings. Set EMBEDDING_PROVIDER=openai for real retrieval quality.
+  LLM_PROVIDER: "openai"
+  LLM_MODEL: "gpt-4o-mini"
+  EMBEDDING_PROVIDER: "openai"
+  EMBEDDING_MODEL: "text-embedding-3-small"
+  EMBEDDING_DIM: "1536"
+
+  # Memory tuning.
+  MEMORY_TOP_K: "8"
+  MEMORY_RECENT_K: "5"
+  MEMORY_CHAR_BUDGET: "2000"
+  MEMORY_DUP_DISTANCE: "0.08"
+  MEMORY_RELATE_DISTANCE: "0.35"
+
+  # OAuth redirect URIs (public API host).
+  GOOGLE_OAUTH_REDIRECT_URI: "https://api.jarvis.example.com/integrations/gmail/callback"
+  SPOTIFY_REDIRECT_URI: "https://api.jarvis.example.com/integrations/spotify/callback"

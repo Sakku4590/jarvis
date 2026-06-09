@@ -1,0 +1,50 @@
+# Phase 1 dependencies. Pin and bump deliberately.
+
+# --- Web framework ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# --- Config & validation ---
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# --- PostgreSQL (async) ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# --- Redis ---
+redis==5.2.1
+
+# --- ChromaDB (HTTP client) ---
+chromadb==0.5.23
+
+# --- Logging ---
+structlog==24.4.0
+
+# --- HTTP client (health checks, later integrations) ---
+httpx==0.28.1
+
+# --- Orchestration (Phase 2) ---
+langgraph==1.2.4
+langchain-core==1.4.0
+
+# --- LLM + embeddings (Phase 2) ---
+openai==2.40.0
+
+# --- Browser automation (Phase 7) ---
+# After install, fetch the browser binary once: `playwright install chromium`
+playwright==1.60.0
+
+# --- Gmail integration + credential encryption (Phase 8) ---
+google-api-python-client==2.197.0
+google-auth==2.53.0
+google-auth-oauthlib==1.4.0
+cryptography==48.0.0
+
+# --- Testing ---
+pytest==8.3.4
+pytest-asyncio==0.25.0
+
+# --- Production server (Phase 13) ---
+gunicorn==26.0.0

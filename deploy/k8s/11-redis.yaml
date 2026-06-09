@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-redis
+  namespace: jarvis
+  labels: { app: jarvis-redis }
+spec:
+  clusterIP: None
+  selector: { app: jarvis-redis }
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jarvis-redis
+  namespace: jarvis
+spec:
+  serviceName: jarvis-redis
+  replicas: 1
+  selector:
+    matchLabels: { app: jarvis-redis }
+  template:
+    metadata:
+      labels: { app: jarvis-redis }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args: ["redis-server", "--appendonly", "yes"]
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            requests: { cpu: "50m", memory: "128Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 2Gi

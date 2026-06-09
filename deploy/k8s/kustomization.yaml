@@ -1,0 +1,32 @@
+# Apply everything with:  kubectl apply -k deploy/k8s
+# Override image tags per release:
+#   kubectl -n jarvis set image deploy/jarvis-backend backend=ghcr.io/your-org/jarvis-backend:<tag>
+# or edit the images: block below (CI patches it with the released SHA tag).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: jarvis
+
+resources:
+  - 00-namespace.yaml
+  - 01-configmap.yaml
+  # 02-secret.example.yaml is intentionally NOT listed: secrets are applied
+  # out-of-band (Sealed Secrets / External Secrets / kubectl create secret) so
+  # `kubectl apply -k` can never overwrite real credentials with placeholders.
+  - 10-postgres.yaml
+  - 11-redis.yaml
+  - 12-chroma.yaml
+  - 20-migrate-job.yaml
+  - 21-backend.yaml
+  - 22-frontend.yaml
+  - 30-ingress.yaml
+  - 40-hpa.yaml
+
+images:
+  - name: ghcr.io/your-org/jarvis-backend
+    newTag: latest
+  - name: ghcr.io/your-org/jarvis-frontend
+    newTag: latest
+
+commonLabels:
+  app.kubernetes.io/part-of: jarvis

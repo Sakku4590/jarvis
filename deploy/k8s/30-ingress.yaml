@@ -1,0 +1,38 @@
+# Host-based routing: the dashboard at app.jarvis.example.com, the API at
+# api.jarvis.example.com. Assumes an ingress-nginx controller and cert-manager
+# for TLS. Adjust hosts, the ingressClassName, and the cluster-issuer to match
+# your environment.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jarvis
+  namespace: jarvis
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - app.jarvis.example.com
+        - api.jarvis.example.com
+      secretName: jarvis-tls
+  rules:
+    - host: app.jarvis.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jarvis-frontend
+                port: { number: 3000 }
+    - host: api.jarvis.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: jarvis-backend
+                port: { number: 8000 }

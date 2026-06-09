@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #0a0c10;
+  /* layered atmosphere: a soft amber bloom top-left + cool depth bottom-right */
+  background-image:
+    radial-gradient(900px 500px at 0% -10%, rgba(245, 182, 66, 0.06), transparent 60%),
+    radial-gradient(900px 600px at 110% 110%, rgba(92, 200, 230, 0.05), transparent 60%);
+  background-attachment: fixed;
+  color: #b7c1cd;
+  font-feature-settings: "ss01", "cv01";
+}
+
+/* faint scanline texture for the control-room feel */
+.scanlines::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 50;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2a3442; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #3a4757; }
+
+.label {
+  font-family: "IBM Plex Mono", monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.66rem;
+}

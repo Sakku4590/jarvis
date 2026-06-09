@@ -1,0 +1,97 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: ghcr.io/${{ github.repository }}-backend
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository }}-frontend
+  # Public API origin the dashboard's browser bundle calls (baked at build).
+  PUBLIC_API_URL: https://api.jarvis.example.com
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: meta
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.PUBLIC_API_URL }}
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-push
+    # Only deploy tagged releases; PR-to-main merges just publish images.
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > "$HOME/.kube/config"
+
+      - name: Roll out release
+        env:
+          TAG: ${{ needs.build-push.outputs.tag }}
+        run: |
+          # Re-run migrations fresh: drop the old Job so apply recreates it.
+          kubectl -n jarvis delete job jarvis-migrate --ignore-not-found
+          kubectl apply -k deploy/k8s
+          kubectl -n jarvis wait --for=condition=complete job/jarvis-migrate --timeout=180s
+
+          # Pin both deployments to the exact released tag and wait for rollout.
+          kubectl -n jarvis set image deployment/jarvis-backend \
+            backend=${{ env.BACKEND_IMAGE }}:${TAG}
+          kubectl -n jarvis set image deployment/jarvis-frontend \
+            frontend=${{ env.FRONTEND_IMAGE }}:${TAG}
+          kubectl -n jarvis rollout status deployment/jarvis-backend --timeout=180s
+          kubectl -n jarvis rollout status deployment/jarvis-frontend --timeout=180s

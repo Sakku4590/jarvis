@@ -1,0 +1,26 @@
+# Runs Alembic migrations to head, then exits. Re-run on each deploy that ships
+# schema changes. The backend Deployment should be applied after this completes;
+# `kubectl apply -k` plus `kubectl wait` in the deploy workflow handles ordering.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jarvis-migrate
+  namespace: jarvis
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels: { app: jarvis-migrate }
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/your-org/jarvis-backend:latest
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef: { name: jarvis-config }
+            - secretRef: { name: jarvis-secrets }
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits: { cpu: "500m", memory: "512Mi" }
